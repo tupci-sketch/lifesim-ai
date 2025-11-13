@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>AI BitLife - Life Simulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="screen">
+        <div class="splash-content">
+            <h1>🎮 OpenLife AI</h1>
+            <p>AI-Powered Life Simulation</p>
+            <div class="splash-subtitle">The Ultimate Life Experience</div>
+            <button id="startNewLifeBtn" class="btn btn--primary btn--lg" style="display: none; margin-top: var(--space-32); min-width: 250px; font-size: var(--font-size-xl); padding: var(--space-16) var(--space-32);">🎬 START NEW LIFE</button>
+        </div>
+    </div>
+
+    <!-- API Setup Screen -->
+    <div id="apiSetup" class="screen" style="display: none;">
+        <div class="creation-content">
+            <h2>Let's Set Up Your Life</h2>
+            <p class="subtitle-text">Connect your Perplexity AI for enhanced storytelling (optional)</p>
+            <div class="form-group">
+                <label class="form-label">Perplexity API Key</label>
+                <input type="password" id="setupApiKey" class="form-control" placeholder="Enter API key (optional)">
+                <small style="color: var(--color-text-secondary); margin-top: var(--space-4); display: block;">AI narration makes your life story unique and dynamic</small>
+            </div>
+            <button class="btn btn--primary btn--full-width" onclick="game.continueWithAPI()">Continue with AI</button>
+            <button class="btn btn--secondary btn--full-width" onclick="game.skipAPI()" style="margin-top: var(--space-8);">Skip &amp; Play</button>
+        </div>
+    </div>
+
+    <!-- Character Creation Screen -->
+    <div id="characterCreation" class="screen" style="display: none;">
+        <div class="creation-content">
+            <h2>Create Your Character</h2>
+            <div class="form-group">
+                <label class="form-label">First Name</label>
+                <input type="text" id="charFirstName" class="form-control" placeholder="Enter first name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Last Name</label>
+                <input type="text" id="charLastName" class="form-control" placeholder="Enter last name">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gender</label>
+                <select id="charGender" class="form-control">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-Binary">Non-Binary</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Country</label>
+                <select id="charCountry" class="form-control" onchange="game.updateCities()">
+                    <option value="United States">United States</option>
+                    <option value="Canada">Canada</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="Germany">Germany</option>
+                    <option value="France">France</option>
+                    <option value="Japan">Japan</option>
+                    <option value="Australia">Australia</option>
+                    <option value="Brazil">Brazil</option>
+                    <option value="Mexico">Mexico</option>
+                    <option value="India">India</option>
+                    <option value="Russia">Russia</option>
+                    <option value="China">China</option>
+                    <option value="South Korea">South Korea</option>
+                    <option value="Italy">Italy</option>
+                    <option value="Spain">Spain</option>
+                    <option value="Saudi Arabia">Saudi Arabia</option>
+                    <option value="UAE">UAE</option>
+                    <option value="Thailand">Thailand</option>
+                    <option value="Sweden">Sweden</option>
+                    <option value="Denmark">Denmark</option>
+                    <option value="Norway">Norway</option>
+                    <option value="Netherlands">Netherlands</option>
+                    <option value="Belgium">Belgium</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">City</label>
+                <select id="charCity" class="form-control">
+                    <option value="New York">New York</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Starting Scenario</label>
+                <select id="charScenario" class="form-control">
+                    <option value="Standard">Standard - Random middle-class background</option>
+                    <option value="Wealthy">Wealthy - Rich family with trust fund</option>
+                    <option value="Poor">Poor - Lower income family</option>
+                    <option value="Orphan">Orphan - Raised by guardian</option>
+                    <option value="Royal">Royal - Born into royalty (if available)</option>
+                    <option value="Celebrity Parent">Celebrity Parent - Famous parent</option>
+                    <option value="Criminal Family">Criminal Family - Parents in crime</option>
+                </select>
+            </div>
+            <button class="btn btn--primary btn--full-width" onclick="game.startGame()">Start Life</button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Main Game Screen -->
+    <div id="gameScreen" class="screen" style="display: none;">
+        <!-- Character Info Header -->
+        <div class="character-header">
+            <div class="character-portrait" id="characterPortrait">👤</div>
+            <div class="character-info">
+                <h3 id="characterName">Character Name</h3>
+                <p id="characterDetails">Age: 0 | Net Worth: $0</p>
+                <p id="characterStatus">Status: Baby</p>
+            </div>
+        </div>
+
+        <!-- Attribute Bars -->
+        <div class="attributes">
+            <div class="attribute">
+                <span>😊 Happiness</span>
+                <div class="attribute-bar">
+                    <div class="attribute-fill" id="happinessBar" style="width: 100%"></div>
+                    <span class="attribute-value" id="happinessValue">100</span>
+                </div>
+            </div>
+            <div class="attribute">
+                <span>❤️ Health</span>
+                <div class="attribute-bar">
+                    <div class="attribute-fill" id="healthBar" style="width: 100%"></div>
+                    <span class="attribute-value" id="healthValue">100</span>
+                </div>
+            </div>
+            <div class="attribute">
+                <span>🧠 Smarts</span>
+                <div class="attribute-bar">
+                    <div class="attribute-fill" id="smartsBar" style="width: 100%"></div>
+                    <span class="attribute-value" id="smartsValue">50</span>
+                </div>
+            </div>
+            <div class="attribute">
+                <span>✨ Looks</span>
+                <div class="attribute-bar">
+                    <div class="attribute-fill" id="looksBar" style="width: 100%"></div>
+                    <span class="attribute-value" id="looksValue">50</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Age Up Button -->
+        <div class="age-up-section">
+            <button class="btn btn--primary btn--lg btn--full-width" onclick="game.ageUp()">⏩ Age Up (1 Year)</button>
+        </div>
+
+        <!-- Event Log -->
+        <div id="eventLog" class="event-log"></div>
+
+        <!-- Tab Content -->
+        <div id="tabContent" class="tab-content">
+            <!-- Status Tab -->
+            <div id="statusTab" class="tab-panel active">
+                <div class="status-section">
+                    <h4>Overview</h4>
+                    <div id="statusOverview"></div>
+                </div>
+            </div>
+
+            <!-- Activities Tab -->
+            <div id="activitiesTab" class="tab-panel">
+                <div class="custom-action-section">
+                    <h4>What do you want to do?</h4>
+                    <div class="form-group" style="margin-bottom: var(--space-8);">
+                        <input type="text" id="customAction" class="form-control" placeholder="Describe what you want to do..." onkeypress="if(event.key === 'Enter') game.executeCustomAction()" style="margin-bottom: var(--space-8);">
+                        <button class="btn btn--primary btn--full-width" onclick="game.executeCustomAction()">✨ Do It!</button>
+                    </div>
+                    <p style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: var(--space-4);">💡 Try anything! "Learn guitar", "Start a business", "Confess feelings", etc.</p>
+                </div>
+                <div id="breadcrumb" style="display: none;"></div>
+                <div id="activitiesContent"></div>
+            </div>
+
+            <!-- Relationships Tab -->
+            <div id="relationshipsTab" class="tab-panel">
+                <div id="relationshipsContent"></div>
+            </div>
+
+            <!-- Assets Tab -->
+            <div id="assetsTab" class="tab-panel">
+                <div id="assetsContent"></div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settingsTab" class="tab-panel">
+                <h4>Settings</h4>
+                <div class="form-group">
+                    <label class="form-label">Perplexity API Key</label>
+                    <input type="password" id="apiKey" class="form-control" placeholder="Enter API key">
+                    <button class="btn btn--secondary" onclick="game.saveApiKey()">Save API Key</button>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">AI Features</label>
+                    <select id="aiEnabled" class="form-control" onchange="game.updateSettings()">
+                        <option value="true">Enabled</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                </div>
+                <div class="settings-actions">
+                    <button class="btn btn--secondary" onclick="game.downloadSave()">💾 Save Game</button>
+                    <button class="btn btn--secondary" onclick="game.resetGame()">🔄 Reset Game</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="game.switchTab('status')">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Status</span>
+            </button>
+            <button class="nav-item" onclick="game.switchTab('activities')">
+                <span class="nav-icon">🎯</span>
+                <span class="nav-label">Activities</span>
+            </button>
+            <button class="nav-item" onclick="game.switchTab('relationships')">
+                <span class="nav-icon">❤️</span>
+                <span class="nav-label">Relations</span>
+            </button>
+            <button class="nav-item" onclick="game.switchTab('assets')">
+                <span class="nav-icon">💰</span>
+                <span class="nav-label">Assets</span>
+            </button>
+            <button class="nav-item" onclick="game.switchTab('settings')">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Settings</span>
+            </button>
+        </nav>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="game.js"></script>
+    <script src="activities.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
